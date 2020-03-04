@@ -1,0 +1,29 @@
+\section{Introduction}
+More than ten years after the writing of the Bitcoin white paper \cite{nakamoto2009bitcoin}, the Bitcoin blockchain is not only used as a way to transfer value, but also to establish financial contracts in a decentralized way.
+These contracts can be specified using a simple scripting language (called Script in Bitcoin) that describes the spending conditions in a transaction.
+They however usually rely on external data, such as a currency exchange rate, that is not directly available within the execution environment of the scripts.
+To work around this limitation, a solution is to use oracles~\cite{ellis2017chainlink}, which provide such information in a format that can be used within a script's execution environment (usually in the form of a digital signature).
+While putting a minimum amount of trust into oracles is unavoidable (assuming that they will not collude with one of the party in the contract), having the parties requesting data to them leaks the existence of the contract.
+
+Discreet Log Contracts (DLC) \cite{dryja2017discreet} aim to solve this issue.
+They enable two parties who do not trust each others to establish financial contracts directly on the Bitcoin blockchain without requiring direct interaction with an oracle.
+This indirect interaction increases the privacy of the contracting parties as the oracle need not be aware of the contract’s existence.
+DLC are also peer to peer contracts, in that they don't require any intermediate party to be established.
+As an example, with DLC, futures and forward contracts can be established between two parties without having to put any of the funds in the custody of a cryptocurrency exchange.
+However, as DLC are settled  on the Bitcoin blockchain, the settlement time as well as the fees that need to be paid to the miners can limit its scalability~\cite{decker2016scalability}. 
+This puts DLC at a disadvantage compared to centralized solutions.
+
+A common solution to these limitations is to make use of second layer protocols~\cite{gudgeon2020sok}, that enable the transfer of assets between parties outside of the blockchain (thus often called off-chain protocols), while still taking advantage of its security properties. 
+Payment channels, and in particular the Lightning Network~\cite{poon2016bitcoin}, is currently one of the most widely used layer two solution.
+We recall the building blocks of payment channels, as well as the functioning of DLC in Section~\ref{sec:prel}.
+Inspired by payment channels, we present in Section~\ref{offdlc} a construction for establishing DLC channels, enabling the execution of consecutive contracts requiring interaction with the blockchain only during the setup and closing phases.
+
+In order to implement these channels, a lot of work has to be done at multiple layers.
+At the network level, the creation of a peer to peer network is a tedious task.
+At the application level, monitoring of the blockchain for the broadcast of transactions from revoked states, as well as ensuring that liquidity is available in the channels are non trivial issues to be solved.
+Fortunately, solutions have already been proposed in the context of the Lightning Network.
+Having the ability for DLC channels to be embedded into the Lightning Network infrastructure would thus be highly beneficial.
+Section~\ref{lninte} describes an approach to achieve this.
+
+While the constructions presented in this paper have to the best of our knowledge not been proposed before, they draw inspiration from past and related work that we discuss in Section~\ref{related}.
+We finally conclude and provide directions for further work in Section~\ref{conclusion}.

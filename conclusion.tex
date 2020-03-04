@@ -1,0 +1,19 @@
+\section{Conclusion and Future Work}\label{conclusion}
+
+In this paper we presented a construction for the establishment of DLC channels.
+These channels enable the execution of multiple consecutive contracts between two parties, while requiring the same amount of on-chain transactions as regular DLC in the best case, and two more transactions in the non-cooperative case.
+We then proposed an approach to integrate DLC channels within the Lightning Network, to reuse infrastructure and technological advances.
+This approach could also be used to integrate other types of protocols within the Lightning Network, as long as they use a fund transaction.
+We plan on implementing this integration in the near future, with a goal of enabling Lightning Network users to enter in various contracts with the parties with which they have a channel open.
+
+Another important part of DLC not touched upon in this paper is the communication between the oracle and the contracting parties.
+Here again, leveraging the existing Lightning Network peer to peer network layer could reduce the amount of required work.
+Communication through the Lightning Network channels could also be considered, enabling payments to oracles.
+
+Potential upgrades to the Bitcoin protocol will also have an impact on how DLC channels can be implemented.
+Firstly, the native support of Schnorr signatures will enable scriptless script versions of DLC.
+This would remove the necessity of a penalty mechanism, as well as enabling contracts between three or more parties to be established.
+Secondly, the addition of a signature hash type such as \texttt{SIGHASH\_NOINPUT} would greatly reduce the complexity of the channel construction.
+We will thus be monitoring these advances closely to integrate them in the planned implementation of DLC channels when they become available.
+
+Finally, while the analysis of the protocols presented in this paper gives us confidence in their correctness, we would like in future work to leverage the advances in formal analysis applied to Bitcoin~\cite{bartoletti2018bitml} to formally verify them.

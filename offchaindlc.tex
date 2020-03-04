@@ -1,0 +1,63 @@
+\documentclass[compsoc,conference,a4paper,10pt,times]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{bmpsize}
+\usepackage{xcolor}
+\usepackage{lipsum}
+\usepackage{fancyvrb}
+\usepackage[colorlinks=true,urlcolor=black]{hyperref}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Discreet Log Contracts Channels and Integration in the Lightning Network}
+
+\author{\IEEEauthorblockN{Ichiro Kuwahara}
+\IEEEauthorblockA{\textit{Crypto Garage} \\
+Tokyo, Japan \\
+kuwahara@cryptogarage.co.jp}
+\and
+\IEEEauthorblockN{Thibaut Le Guilly}
+\IEEEauthorblockA{\textit{Crypto Garage} \\
+Tokyo, Japan \\
+thibaut@cryptogarage.co.jp}
+\and
+\IEEEauthorblockN{Takatoshi Nakagawa}
+\IEEEauthorblockA{\textit{DG Lab} \\
+Tokyo, Japan \\
+nakagat@gmail.com}
+}
+
+\maketitle
+
+\begin{abstract}
+Contracts established on a blockchain remove the need for intermediary third parties, but usually require external data to decide on an outcome, provided by a so-called oracle.
+Discreet Log Contracts (DLC) enable establishing such contracts directly on the Bitcoin blockchain without direct interaction with an oracle, increasing the privacy of the contracting parties.
+Using the Bitcoin blockchain however also means hitting the scalability issues that are inherent to it.
+To solve this issue, we propose a construction for establishing DLC off-chain through channels enabling the execution of consecutive contracts requiring only interaction with the blockchain during the setup and closing phases, similar to the functioning of the Lightning Network.
+We provide an analysis of the construction to ensure its security, and then describe how DLC channels could be integrated in parallel to Lightning Network channels making them easier to use and enabling reuse of the Lightning Network's infrastructure.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Bitcoin, smart contract, payment channels
+\end{IEEEkeywords}
+
+\input{introduction.tex}
+\input{base_dlc.tex}
+\input{offchain_dlc.tex}
+\input{lightning_integration.tex}
+\input{related_work.tex}
+\input{conclusion.tex}
+
+\bibliography{references}{}
+\bibliographystyle{plain}
+
+\appendices
+
+\input{appendix.tex}
+
+\end{document}

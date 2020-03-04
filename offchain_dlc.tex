@@ -1,0 +1,120 @@
+\section{DLC Channels}\label{offdlc}
+
+In this section, we first describe a naive approach to establishing and updating a DLC contract off-chain, and show why it fails.
+We then present our solution to securely do it.
+
+\subsection{A straw-man proposal}\label{strawman}
+
+A simple approach to establish off-chain DLC is to make CETs and the refund transaction revocable.
+We assume two parties, Alice and Bob, want to create a DLC channel, to be able to establish multiple consecutive contracts.
+The protocol would be as follow:
+\begin{enumerate}
+  \item Alice and Bob create all transactions and exchange signatures according to the \emph{regular} DLC protocol,
+  \item Bob broadcasts the fund transaction,
+  \item After contract maturity, they create a new set of CETs and a new refund transaction representing the new contract to establish,
+  \item Alice sends to Bob her signatures for the new CETs and refund transaction,
+  \item Bob sends to Alice his signatures for the new transactions,
+  \item\label{problem} Alice sends to Bob her revocation key, \emph{revoking} her previous CETs and refund transaction,
+  \item Bob sends to Alice his revocation key for the previous DLC transactions.
+\end{enumerate}
+
+At the end of this protocol, both Alice and Bob have the set of signed transactions for the second DLC, and the transactions for the previous one are revoked.
+However, there is an issue at step~\ref{problem}.
+After sending her revocation secret to Bob, Alice cannot anymore enforce the result from the first contract.
+However, as Bob has not yet revealed his secret, he still has the ability to do so, in addition to having the ability to enforce the second one.
+If Bob is dishonest, he could thus choose not to reveal his revocation key, and wait until just before the maturity of the second contract to execute the one that is most favorable to him (he could also potentially use the previous refund transaction if the time lock expired).
+Note that the Lightning Network does not suffer from this issue, as when updating a channel, the payer should reveal their secret first as the update will be unfavorable to them.
+
+In order to solve this issue, we introduce two new types of transactions in the protocol.
+
+\subsection{Update transaction}
+The first new transaction is the update transaction.
+It is similar in structure to the \emph{commitment} transaction in the Lightning Network, taking as input the multi-signature output of the fund transaction, and containing two outputs, representing the current balance of each party in the channel.
+Each party holds a different update transaction, in order to enable their revocation.
+The first output contains three different spending paths (the script for this output is detailed in Script~\ref{script:updatetx1}). 
+We describe here the required arguments for the three paths of the first output of the transaction held by Alice:
+\begin{enumerate}
+  \item A signature from Alice's revocation key, 
+  \item A signature from both Alice and Bob, plus a time delay (CSV) $d_1$,
+  \item A signature from Alice, plus a time delay (CSV) $d_2$.
+\end{enumerate}
+
+The second output contains two different spending paths (the script is detailed in Script~\ref{script:updatetx2}), requiring either:
+\begin{enumerate}
+  \item A signature from both Alice and Bob,
+  \item A signature from Bob, plus a time delay (CSV) $d_2$.
+\end{enumerate}
+
+Note that it is necessary that $d_1 < d_2$ as will become clear in the description of the protocol in Section~\ref{offdlcproto}.
+The version held by Bob is similar, with Bob and Alice's signatures reversed.
+
+\subsection{Buffer transaction}
+A buffer transaction consumes both outputs of an update transaction, using the multi-signature paths.
+It combines the value of these inputs into a single output, requiring both Alice and Bob signatures to be unlocked (the script is detailed in Script~\ref{script:buffertx}).
+
+\subsection{Offchain DLC protocol}\label{offdlcproto}
+Having these two new types of transactions, we can describe the protocol for establishing and updating a DLC channel.
+The transaction flow is illustrated in Figure~\ref{fig:full}.
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\textwidth]{Figures/fullOffChainDLC.pdf}
+  \caption{Illustration of the transaction flow for the establishment and update of a DLC channel. The addition of the update and buffer transactions enables both parties to safely re-enter in a contract after a previous one has expired.}
+  \label{fig:full}
+\end{figure*}
+
+\subsubsection{Establishment}
+The establishment of a DLC channel is similar to that of an \emph{on-chain} DLC.
+We make use of the two new types of transaction for consistency across the protocol steps, but note that at this stage they are not strictly required (one could instead make the CETs and the refund transaction revokable for this initial contract, as long as the update and buffer transactions are used for establishing the second one).
+In the following, we assume that the terms of the contract are already agreed upon between the participants:
+\begin{enumerate}
+  \item Alice sends to Bob the set of UTXOs she wants to use to fund the channel, a public key for later revocation, as well as a set of public keys to be used in the transactions,
+  \item Bob selects a set of UTXOs, and using the information received from Alice constructs the transactions and generates signatures for them,
+  \item Bob sends back his set of UTXOs and public keys, as well as his signatures for all transactions except for the fund transaction and \emph{his} update transaction,
+  \item Alice creates the transactions and signatures, and sends the signatures to Bob (except for \emph{her} update transaction),
+  \item Bob adds the signatures to the fund transaction and broadcasts it.
+\end{enumerate}
+
+As in regular DLC, parties are ensured that their funds can always be unlocked by signing the fund transaction last.
+Note that both parties should validate the signatures they receive.
+
+\subsubsection{Update}
+
+At contract maturity, once the oracle has released a signature, Alice and Bob can decide to create a mutual closing transaction to terminate the contract, or if one party is uncooperative, the other party can broadcast the update, buffer, appropriate CET and closing transactions.
+We assume here that instead they wish to enter in another contract, and have already agreed on the terms.
+They can then use the following protocol:
+\begin{enumerate}
+  \item Alice and Bob generate the set of transactions (update, buffer, CETs and refund) for the new contract, with the update transactions having output values equal to the outcome of the previous contract,
+  \item \label{a1} Alice sends her signatures for Bob's update transaction, all CETs and the refund transactions,
+  \item \label{b1} Bob sends his signatures for Alice's update transaction, all CETs, the refund transactions, as well as the revocation key for his previous update transaction,
+  \item \label{a2} Alice sends the revocation key for her previous update transaction, as well as the signature for her buffer transaction,
+  \item \label{b2} Bob sends his signatures for both buffer transactions.
+  \item \label{a3} Alice sends her signature for Bob's buffer transaction.
+\end{enumerate}
+
+We go through the different steps of this protocol to analyze the possible actions of both participants after each step.
+
+\paragraph{Step \ref{a1}}: Bob obtained Alice's signature for his update transaction, giving him the ability to broadcast it.
+However, as he does not have Alice's signature for the following buffer transaction, he would only be able to use the third script path returning him the same amount as decided by the outcome of the previous contract, after expiration of the time lock.
+Alice would also recover the same amount as she was awarded by the outcome of the previous contract.
+Given the information held by each party at this stage, Bob's update transaction resembles a mutual closing transaction, with a time delay.
+Alice on her side still has the possibility of unilaterally closing the previous contract would Bob stop cooperating.
+
+\paragraph{Step \ref{b1}}: Bob has revealed the revocation key for his previous update transaction, and can thus no longer broadcast it safely without risking to be penalized.
+But since he has the ability to recover his due funds with the last update transaction, he still can exit the channel would Alice stop cooperating.
+Alice also obtained the ability to broadcast her update transaction (but not the following buffer transaction).
+
+\paragraph{Step \ref{a2}}: Alice revoked her previous update transaction, and Bob has the ability to broadcast Alice's buffer transactions.
+That means that if Alice were to broadcast her fund transaction, Bob can force Alice to honor the contract.
+While Alice doesn't yet have the same ability, broadcast of Bob's update transaction would only lead to settling the channel on the previous contract's outcome.
+If Bob were to stop collaborating at this point, Alice can broadcast her update transaction to either force Bob to broadcast her buffer transaction and enter in the contract, or exit the contract at the latest state.
+
+\paragraph{Step \ref{b2}}: Alice obtained the ability to broadcast both buffer transactions, either for unilaterally closing the contract after maturity using the path starting with her update transaction, or for forcing Bob to honor the contract were he to broadcast his update transaction before the term.
+
+\paragraph{Step \ref{a3}}: Bob now also has the ability to broadcast all transactions, except for Alice's update transaction.
+
+\subsection{Comparison with on-chain protocol}
+
+Compared with the on-chain version, we note that the off-chain protocol leads to a larger number of transactions to be broadcast in the case of a unilateral close (5 compared to 3).
+However, unilateral closes are expected to be an exception, and cooperative closes still only require two transactions to be broadcast.
+In addition, the off-chain protocol enables the execution of an unlimited number of contracts, and apart from the update and buffer transactions, the other transactions are the same as the on-chain version, meaning that implementations can reuse the code from the off-chain version.

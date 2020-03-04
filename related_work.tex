@@ -1,0 +1,12 @@
+\section{Related Work}\label{related}
+
+As already discussed in Section \ref{discuss}, Bedn\'ar and Pickhardt \cite{bednar2019} previously proposed DLC channels embedded in the Lightning Network.
+Their construction works by adding an extra output to the commitment transaction of a lightning channel, which is used as the funding for a DLC.
+One of the disadvantage of this approach is the complex interaction between the DLC and lightning channels.
+They also mention splitting a channel into a DLC and lightning one by extending the peer protocol of the Lightning Network, but details on how this would be achieved are not given making it difficult to compare with our proposed approach.
+Finally, the authors also mention the possibility to improve the construction if Bitcoin introduces the \texttt{SIGHASH\_NOINPUT} signature hash, as well as using channel factories.
+\texttt{SIGHASH\_NOINPUT} would indeed allow for much simpler and more general constructions similar to the eltoo protocol~\cite{decker2018eltoo}.
+
+Channel factories \cite{burchert2018scalable} could indeed prove useful to make it easier to create DLC channels as well as increase the scalability for channel setup.
+
+While we chose the penalty model of the Lightning Network as a basis for the DLC channel construction, in part due to the desire of enabling integration within it, the model of micro-payment channels~\cite{decker2015fast} could also be a viable approach, potentially reducing the asymmetry of the transactions.

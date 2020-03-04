@@ -1,0 +1,100 @@
+\newtheorem{script}{Script}
+
+\section{Transaction scripts}\label{append1}
+
+For completeness, this appendix lists the scripts for the transactions that are used in the establishment and update of DLC channels.
+
+\begin{script}[Fund transaction output script]\label{script:fundtx} \\
+\begin{Verbatim}[samepage=true]
+OP_2 
+<alice public key> 
+<bob   public key> 
+OP_2 
+OP_CHECKMULTISIG 
+\end{Verbatim}
+\end{script}
+
+\begin{script}[Script for the first output of an update transaction]\label{script:updatetx1}\\
+\begin{Verbatim}[samepage=true]
+OP_IF
+    <delay 1>
+    OP_CHECKSEQUENCEVERIFY
+    OP_DROP
+    OP_2
+        <alice public key>
+        <bob   public key>
+    OP_2
+    OP_CHECKMULTISIG
+OP_ELSE
+    OP_IF
+        <delay 2>
+        OP_CHECKSEQUENCEVERIFY
+        OP_DROP
+        <alice/bob public key>
+    OP_ELSE
+        <alice/bob revocation public key>
+    OP_ENDIF
+    OP_CHECKSIG
+OP_ENDIF
+\end{Verbatim}
+Note that \Verb _delay 1_ must be less than \Verb _delay 2_.
+\end{script}
+
+\begin{script}[Script for the second output of an update transaction]\label{script:updatetx2}\\
+\begin{Verbatim}[samepage=true]
+OP_IF
+    OP_2
+        <alice public key>
+        <bob   public key>
+    OP_2
+    OP_CHECKMULTISIG
+OP_ELSE
+    <delay 2>
+    OP_CHECKSEQUENCEVERIFY
+    OP_DROP
+    <alice/bob public key>
+    OP_CHECKSIG
+OP_ENDIF
+\end{Verbatim}
+Note that \Verb _delay 2_ should be the same value as used in the first output.
+\end{script}
+
+\begin{script}[Buffer transaction output script]\label{script:buffertx}\\
+\begin{Verbatim}[samepage=true]
+OP_2
+    <alice public key>
+    <bob   public key>
+OP_2
+OP_CHECKMULTISIG
+\end{Verbatim}
+\end{script}
+
+\begin{script}[Script for the first output of a CET]\label{script:cet}\\
+\begin{Verbatim}[samepage=true]
+OP_IF
+    <alice/bob public key>
+      + <oracle message public key>
+OP_ELSE
+    <delay 3>
+    OP_CHECKSEQUENCEVERIFY
+    OP_DROP
+    <bob/alice public key>
+OP_ENDIF
+OP_CHECKSIG
+\end{Verbatim}
+Note that the \Verb _+_ operator represents elliptic curve point addition.
+\end{script}
+
+\begin{script}[Output script of a split transaction]~\label{script:splittx}\\
+\begin{Verbatim}[samepage=true]
+OP_IF
+    <alice/bob revocation public key>
+OP_ELSE
+    <delay>
+    OP_CHECKSEQUENCEVERIFY
+    OP_DROP
+    <alice/bob public key>
+OP_ENDIF
+OP_CHECKSIG
+\end{Verbatim}
+\end{script}
